@@ -132,31 +132,20 @@ class FinalProject {
 
     public static void main(String[] args){
 
-        // // parse arguments
-        // if(args.length < 1){
-        //     System.out.println("No parameters passed.");
-        //     // printCommands();
-        //     return;
-        // }
-
-        // switch (args[0]){
-        //     case "test":
-        //         runQuery("SELECT * FROM Category", args);
-        // }
-
         // connect to the database
-        // try {
-        //     // workaround for some broken Java implementations
-        //     Class.forName("com.mysql.cj.jdbc.Driver");
-        // } catch (ReflectiveOperationException e) {
-        //     System.out.println("Error loading JDBC Driver! Outputting stack trace");
-        //     e.printStackTrace();
-        //     System.exit(1);
-        // }
-        // System.out.println();
-        // System.out.println("JDBC driver loaded");
-        // conn = makeConnection();
-        // assert conn != null;
+        try {
+            // workaround for some broken Java implementations
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ReflectiveOperationException e) {
+            System.out.println("Error loading JDBC Driver! Outputting stack trace");
+            e.printStackTrace();
+            System.exit(1);
+        }
+        System.out.println();
+        System.out.println("JDBC driver loaded");
+        conn = makeConnection();
+        assert conn != null;
+        ////////
 
         String s;
         Scanner scanner = new Scanner(System.in);
@@ -181,25 +170,57 @@ class FinalProject {
 
     }
 
+    // new-class CS410 Sp20 1 "Databases"
     private static void addNewClass(String[] command) {
+        if(command.length < 5){
+            System.out.println(
+                "Missing one or more parameters. Format is: new-class <class number> <term> <section> \"<description>\"");
+            return;
+        }
+
+        String q = "Call createClass(?, ?, ?, ?)";
+        runQuery(command, q);
     }
 
-    private static void runCommand(String[] args, String query) {
+    private static void runQuery(String[] args, String query) {
         
         PreparedStatement stmt = null;
         ResultSet res = null;
-        
-        // try {
-        //     stmt = conn.prepareStatement(query);
 
-        //     // add arguments
+        try {
+            stmt = conn.prepareStatement(query);
+            // add arguments to query
+            if (args != null) {
+                int i = 1;
+                for (int j = 1; j < args.length; j++) { // start at 1 to ignore command name
+                    stmt.setString(i, args[j]);
+                    System.out.println("query: " + stmt);
+                    i++;
+                }
+            }
 
-        //     // execute
-        //     boolean hasResultSet = stmt.execute();
-        //     if(!hasResultSet){
-        //         throw new RuntimeException("Error: No result set returned.");
-        //     }
-        // }
+            // // actual SQL statement execution
+            boolean hasResultSet = stmt.execute();
+            System.out.println(hasResultSet);
+
+        }catch (SQLException ex) {
+            System.err.println("SQLException: " + ex.getMessage());
+            System.err.println("SQLState: " + ex.getSQLState());
+            System.err.println("VendorError: " + ex.getErrorCode());
+        } finally {
+            if (res != null) {
+                try {
+                    res.close();
+                } catch (SQLException ignored) {
+                }
+            }
+            if (stmt != null) {
+                try {
+                    stmt.close();
+                } catch (SQLException ignored) {
+                }
+            }
+        }
     }
 
 }
