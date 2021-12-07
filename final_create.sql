@@ -58,7 +58,8 @@ CREATE PROCEDURE createClass(
 	IN classNum VARCHAR(32), IN classTerm VARCHAR(32), IN classSection INT, classDesc TEXT
 )
 BEGIN
-    INSERT INTO Class VALUES (classNum, classTerm, classSection, classDesc);
+    INSERT INTO Class (course_number, term, section, class_desc) 
+    VALUES (classNum, classTerm, classSection, classDesc);
 END //
     
 DELIMITER ;

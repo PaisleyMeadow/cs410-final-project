@@ -52,84 +52,6 @@ class FinalProject {
         return conn;
     }
 
-    /**
-     * Run a query on the database
-     *
-     * @param query       SQL query string, including '?' for arguments
-     * @param args        arguments for string
-     * @param columnTypes data types of each respective result set column
-     */
-    private static void runQuery(String query, String[] args) {
-        PreparedStatement stmt = null;
-        ResultSet rs = null;
-
-        // prepare statement for execution
-        try {
-            stmt = conn.prepareStatement(query);
-            // add arguments to query
-            if (args != null) {
-                int i = 1;
-                for (String argument : args) {
-                    stmt.setString(i, argument);
-                    i++;
-                }
-            }
-
-            // actual SQL statement execution
-            boolean hasResultSet = stmt.execute();
-
-            // get the results
-            // if (columnTypes != null) {
-                if (!hasResultSet) {
-                    throw new RuntimeException("Result types specified, but not result set was returned");
-                }
-            //     rs = stmt.getResultSet();
-            //     rs.beforeFirst();
-            //     System.out.println("RESULT SET:");
-            //     while (rs.next()) {
-            //         StringBuilder output = new StringBuilder();
-            //         int i = 1;
-            //         for (ColumnType columnType : columnTypes) {
-            //             switch (columnType) {
-            //                 case STRING:
-            //                     output.append(rs.getString(i));
-            //                     break;
-            //                 case INT:
-            //                     output.append(rs.getInt(i));
-            //                     break;
-            //                 case DOUBLE:
-            //                     output.append(rs.getDouble(i));
-            //                     break;
-            //             }
-            //             if (i < columnTypes.length) {
-            //                 output.append(":");
-            //             }
-            //             i++;
-            //         }
-            //         System.out.println(output);
-            //     }
-            // }
-            System.out.println(stmt.getResultSet());
-        } catch (SQLException ex) {
-            System.err.println("SQLException: " + ex.getMessage());
-            System.err.println("SQLState: " + ex.getSQLState());
-            System.err.println("VendorError: " + ex.getErrorCode());
-        } finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException ignored) {
-                }
-            }
-            if (stmt != null) {
-                try {
-                    stmt.close();
-                } catch (SQLException ignored) {
-                }
-            }
-        }
-    }
-
     public static void main(String[] args){
 
         // connect to the database
@@ -152,7 +74,6 @@ class FinalProject {
         System.out.println("Please enter a command...");
 
         while((s = scanner.nextLine()).length() > 0) {
-            System.out.println("String was " + s);
             parseCommand(s);
         }
 
@@ -170,18 +91,6 @@ class FinalProject {
 
     }
 
-    // new-class CS410 Sp20 1 "Databases"
-    private static void addNewClass(String[] command) {
-        if(command.length < 5){
-            System.out.println(
-                "Missing one or more parameters. Format is: new-class <class number> <term> <section> \"<description>\"");
-            return;
-        }
-
-        String q = "Call createClass(?, ?, ?, ?)";
-        runQuery(command, q);
-    }
-
     private static void runQuery(String[] args, String query) {
         
         PreparedStatement stmt = null;
@@ -194,7 +103,7 @@ class FinalProject {
                 int i = 1;
                 for (int j = 1; j < args.length; j++) { // start at 1 to ignore command name
                     stmt.setString(i, args[j]);
-                    System.out.println("query: " + stmt);
+                    System.out.println("query stmt: " + stmt);
                     i++;
                 }
             }
@@ -204,6 +113,7 @@ class FinalProject {
             System.out.println(hasResultSet);
 
         }catch (SQLException ex) {
+            System.err.println("Unable to execute query.");
             System.err.println("SQLException: " + ex.getMessage());
             System.err.println("SQLState: " + ex.getSQLState());
             System.err.println("VendorError: " + ex.getErrorCode());
@@ -221,6 +131,18 @@ class FinalProject {
                 }
             }
         }
+    }
+
+    // new-class CS410 Sp20 1 "Databases"
+    private static void addNewClass(String[] command) {
+        if(command.length < 5){
+            System.out.println(
+                "Missing one or more parameters. Format is: new-class <class number> <term> <section> \"<description>\"");
+            return;
+        }
+
+        String q = "Call createClass(?, ?, ?, ?)";
+        runQuery(command, q);
     }
 
 }
