@@ -64,8 +64,31 @@ END //
     
 DELIMITER ;
 
--- selects the only section of class in the most recent term, if there is only one such section; if there are multiple sections it fails. 
--- first, get class adfadf figure this bullshit out later...
+-- selects class (for active class)
+DELIMITER $$
+
+CREATE PROCEDURE selectClass(
+	IN pnumber VARCHAR(32), pterm VARCHAR(32), psection INT
+)
+BEGIN
+IF pterm IS NULL THEN
+
+	SELECT course_id, course_number FROM Class 
+    WHERE course_number = pnumber 
+    AND CAST(SUBSTR(term, 3, 4) AS SIGNED) =
+		( SELECT MIN(CAST(SUBSTR(term, 3, 4) AS SIGNED)) FROM Class WHERE course_number = pnumber);
+
+ELSEIF psection IS NULL THEN
+
+	SELECT course_id, course_number FROM Class WHERE course_number = pnumber AND term = pterm;
+
+ELSE
+	SELECT course_id, course_number FROM Class WHERE course_number = pnumber AND term = pterm AND section = psection;
+END IF;
+
+END$$
+
+DELIMITER ;
 
 -- show categories for current (given) class
 DELIMITER //
@@ -78,4 +101,4 @@ END //
     
 DELIMITER ;
 
-SELECT course_number, count(student_id) FROM Class NATURAL JOIN Enrolled GROUP BY course_number;
+

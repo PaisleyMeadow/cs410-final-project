@@ -1,10 +1,9 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
-
-import javax.naming.spi.DirStateFactory.Result;
 
 class FinalProject {
 
@@ -12,22 +11,14 @@ class FinalProject {
     // should contain port number, schema name, and mysql password
     private static String SECRETS_FILE = "secrets";
 
-    // java types corresponding to types of data stored in db
-    public enum ColumnType {
-        STRING,
-        INT,
-        DOUBLE,
+    // active class
+    public static class ActiveClass{
+        static String name = null;
+        static int id = 0;
     }
-
-    private static ColumnType[] itemColumnTypes = new ColumnType[]{ColumnType.INT, ColumnType.STRING, ColumnType.STRING, ColumnType.DOUBLE};
-    private static ColumnType[] shipmentColumnColumnTypes = new ColumnType[]{ColumnType.INT, ColumnType.INT, ColumnType.INT, ColumnType.STRING};
-    private static ColumnType[] purchaseColumnTypes = new ColumnType[]{ColumnType.INT, ColumnType.INT, ColumnType.INT, ColumnType.STRING};
 
     // database connection instance
     private static Connection conn;
-
-    // active class
-    private static String activeClass = "";
 
     /**
      * Connect to the database
@@ -102,6 +93,12 @@ class FinalProject {
                 addNewClass(command);
             case "list-classes":
                 listClasses();
+            case "select-class":
+                selectClass(command);
+            case "show-class":
+                showClass();
+            case "q":
+                System.exit(0);
         }
 
     }
@@ -122,7 +119,7 @@ class FinalProject {
                 }
             }
 
-            // // actual SQL statement execution
+            // actual SQL statement execution
             boolean hasResultSet = stmt.execute();
             System.out.println(hasResultSet);
 
@@ -133,7 +130,6 @@ class FinalProject {
                 }
                 res = stmt.getResultSet();
                 res.beforeFirst();
-                System.out.println("RESULT SET:" + res);
                 return res;
             }
 
@@ -198,22 +194,69 @@ class FinalProject {
     }
 
     // set the active class
-    // 
+    // select-class <class number> : selects only section of that class in the most recent term;
+    // if there is multiple section that match this criteria, it fails
+    //
+    // select-class <class number> <term> selects the only section of class number in given term
+    //
+    // select-class <class number> <term> <section> selects specified section
     private static void selectClass(String[] command){
 
+        // get the class(es)
+        String q = "Call selectClass(?, ?, ?)";
 
-
-        // select section of class in most recent term; if there are multiple
-        // sections, fail
+        // some array manipulation because I'm lazy...
+        // (gotta add nulls to parameters)
+        ArrayList<String> comList = new ArrayList<String>(Arrays.asList(command));
         if(command.length == 2){
+            comList.add(null);
+            comList.add(null);
+        }
+        if(command.length == 3){
+            comList.add(null);
+        }
 
-        } // select only section of class in given term; if there are multiple, fail
-        else if(command.length == 3){
+        String[] all_args = (String[]) comList.toArray();
 
-        } // select specified section
-        else if(command.length == 4){
+        ResultSet res = runQuery(all_args, q, true);
+        
+        // get number of rows returned
+        int numRows = 0;
+        try {
+            if (res.last()) {
+                numRows = res.getRow();
+                // Move to beginning
+                res.beforeFirst();
+            }
+        } catch (SQLException ex) {
+            System.err.println("Unable to query class.");
+            System.err.println("SQLException: " + ex.getMessage());
+        }
+        
+        // if there are multiple classes that match the parameters, fail
+        if(numRows > 1){
+            System.out.println("Unable to select class; more than one class was returned.");
+            return;
+        }  
 
+        try {
+            if(res.first()){
+                FinalProject.ActiveClass.id = res.getInt("course_id");
+                FinalProject.ActiveClass.name = res.getString("course_number");
+
+                System.out.println("Active class set to: " + FinalProject.ActiveClass.name);
+                return;
+            }
+        } catch (SQLException ex) {
+            System.err.println("Unable to set active class.");
+            System.err.println("SQLException: " + ex.getMessage());
         }
     }
 
+    private static void showClass(){
+        if(FinalProject.ActiveClass.id != 0){
+            System.out.println("Active class: " + FinalProject.ActiveClass.name);
+            return;
+        }
+    }
 }
