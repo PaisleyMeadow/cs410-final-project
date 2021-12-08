@@ -1,7 +1,6 @@
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.sql.*;
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Scanner;
 
@@ -13,8 +12,22 @@ class FinalProject {
     // should contain port number, schema name, and mysql password
     private static String SECRETS_FILE = "secrets";
 
+    // java types corresponding to types of data stored in db
+    public enum ColumnType {
+        STRING,
+        INT,
+        DOUBLE,
+    }
+
+    private static ColumnType[] itemColumnTypes = new ColumnType[]{ColumnType.INT, ColumnType.STRING, ColumnType.STRING, ColumnType.DOUBLE};
+    private static ColumnType[] shipmentColumnColumnTypes = new ColumnType[]{ColumnType.INT, ColumnType.INT, ColumnType.INT, ColumnType.STRING};
+    private static ColumnType[] purchaseColumnTypes = new ColumnType[]{ColumnType.INT, ColumnType.INT, ColumnType.INT, ColumnType.STRING};
+
     // database connection instance
     private static Connection conn;
+
+    // active class
+    private static String activeClass = "";
 
     /**
      * Connect to the database
@@ -87,23 +100,24 @@ class FinalProject {
         switch(command[0]){
             case "new-class":
                 addNewClass(command);
+            case "list-classes":
+                listClasses();
         }
 
     }
 
-    private static void runQuery(String[] args, String query) {
+    private static ResultSet runQuery(String[] args, String query, Boolean expectResults) {
         
         PreparedStatement stmt = null;
         ResultSet res = null;
 
         try {
-            stmt = conn.prepareStatement(query);
+            stmt = conn.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
             // add arguments to query
             if (args != null) {
                 int i = 1;
                 for (int j = 1; j < args.length; j++) { // start at 1 to ignore command name
                     stmt.setString(i, args[j]);
-                    System.out.println("query stmt: " + stmt);
                     i++;
                 }
             }
@@ -112,27 +126,43 @@ class FinalProject {
             boolean hasResultSet = stmt.execute();
             System.out.println(hasResultSet);
 
+            if(expectResults)
+            {
+                if (!hasResultSet) {
+                    throw new RuntimeException("Result types specified, but no result set was returned");
+                }
+                res = stmt.getResultSet();
+                res.beforeFirst();
+                System.out.println("RESULT SET:" + res);
+                return res;
+            }
+
+            return null;
+    
         }catch (SQLException ex) {
             System.err.println("Unable to execute query.");
             System.err.println("SQLException: " + ex.getMessage());
             System.err.println("SQLState: " + ex.getSQLState());
             System.err.println("VendorError: " + ex.getErrorCode());
         } finally {
-            if (res != null) {
-                try {
-                    res.close();
-                } catch (SQLException ignored) {
-                }
-            }
-            if (stmt != null) {
-                try {
-                    stmt.close();
-                } catch (SQLException ignored) {
-                }
-            }
+            // if (res != null) {
+            //     try {
+            //         res.close();
+            //     } catch (SQLException ignored) {
+            //     }
+            // }
+            // if (stmt != null) {
+            //     try {
+            //         stmt.close();
+            //     } catch (SQLException ignored) {
+            //     }
+            // }
         }
+
+        return res;
     }
 
+    // add new class
     // new-class CS410 Sp20 1 "Databases"
     private static void addNewClass(String[] command) {
         if(command.length < 5){
@@ -142,7 +172,48 @@ class FinalProject {
         }
 
         String q = "Call createClass(?, ?, ?, ?)";
-        runQuery(command, q);
+        runQuery(command, q, false);
+    }
+
+    // list classes with the # of students in each
+    // list-classes
+    private static void listClasses(){
+        String q = "SELECT course_number, count(student_id) as students FROM Class NATURAL JOIN Enrolled GROUP BY course_number";
+        ResultSet res = runQuery(null, q, true);
+
+        StringBuilder output = new StringBuilder();
+        output.append("Class | # Students\n");
+        try{
+            while(res.next()){
+                output.append(res.getString("course_number") + "  |  ");
+                output.append(res.getInt("students") + "\n");
+            }
+        }
+        catch(SQLException ex){
+            System.err.println("Unable to print result set.");
+            System.err.println("SQLException: " + ex.getMessage());
+        }
+
+        System.out.println(output);
+    }
+
+    // set the active class
+    // 
+    private static void selectClass(String[] command){
+
+
+
+        // select section of class in most recent term; if there are multiple
+        // sections, fail
+        if(command.length == 2){
+
+        } // select only section of class in given term; if there are multiple, fail
+        else if(command.length == 3){
+
+        } // select specified section
+        else if(command.length == 4){
+
+        }
     }
 
 }

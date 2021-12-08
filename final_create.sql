@@ -1,6 +1,6 @@
 CREATE TABLE Class ( 
 	course_id INT AUTO_INCREMENT NOT NULL, 
-	course_number VARCHAR(32) UNIQUE NOT NULL,    
+	course_number VARCHAR(32) NOT NULL,    
 	term VARCHAR(32) NOT NULL, 
     section INT NOT NULL, 
     class_desc TEXT,
@@ -12,9 +12,9 @@ CREATE TABLE Category (
 	category_id INT AUTO_INCREMENT NOT NULL,
     category_name VARCHAR(64) NOT NULL,
     weight DOUBLE,
-    course_number VARCHAR(32) NOT NULL,
+    course_id INT NOT NULL,
     
-    FOREIGN KEY (course_number) REFERENCES Class(course_number),
+    FOREIGN KEY (course_id) REFERENCES Class(course_id),
     PRIMARY KEY (category_id)
 );
 
@@ -37,10 +37,10 @@ CREATE TABLE Student (
 
 CREATE TABLE Enrolled ( 
 	student_id INT NOT NULL, 
-    course_number VARCHAR(32) NOT NULL,
+    course_id INT NOT NULL,
     
     FOREIGN KEY (student_id) REFERENCES Student(student_id),
-    FOREIGN KEY (course_number) REFERENCES Class(course_number)
+    FOREIGN KEY (course_id) REFERENCES Class(course_id)
 );
 
 CREATE TABLE Submitted ( 
@@ -78,5 +78,4 @@ END //
     
 DELIMITER ;
 
-
-CALL createClass("TEST100", "F20", 1, "A test class.");
+SELECT course_number, count(student_id) FROM Class NATURAL JOIN Enrolled GROUP BY course_number;
