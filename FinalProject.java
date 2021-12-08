@@ -209,8 +209,8 @@ class FinalProject {
         // (gotta add nulls to parameters)
         ArrayList<String> comList = new ArrayList<String>(Arrays.asList(command));
         if(command.length == 2){
-            comList.add(null);
-            comList.add(null);
+            comList.add((String)null);
+            comList.add((String)null);
         }
         if(command.length == 3){
             comList.add(null);
