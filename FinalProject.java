@@ -91,12 +91,16 @@ class FinalProject {
         switch(command[0]){
             case "new-class":
                 addNewClass(command);
+                break;
             case "list-classes":
                 listClasses();
+                break;
             case "select-class":
                 selectClass(command);
+                break;
             case "show-class":
                 showClass();
+                break;
             case "q":
                 System.exit(0);
         }
@@ -109,7 +113,7 @@ class FinalProject {
         ResultSet res = null;
 
         try {
-            stmt = conn.prepareStatement(query, ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+            stmt = conn.prepareStatement(query, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
             // add arguments to query
             if (args != null) {
                 int i = 1;
@@ -121,7 +125,6 @@ class FinalProject {
 
             // actual SQL statement execution
             boolean hasResultSet = stmt.execute();
-            System.out.println(hasResultSet);
 
             if(expectResults)
             {
@@ -130,6 +133,7 @@ class FinalProject {
                 }
                 res = stmt.getResultSet();
                 res.beforeFirst();
+
                 return res;
             }
 
@@ -164,11 +168,11 @@ class FinalProject {
         if(command.length < 5){
             System.out.println(
                 "Missing one or more parameters. Format is: new-class <class number> <term> <section> \"<description>\"");
-            return;
         }
-
-        String q = "Call createClass(?, ?, ?, ?)";
-        runQuery(command, q, false);
+        else{
+            String q = "Call createClass(?, ?, ?, ?)";
+            runQuery(command, q, false);
+        }
     }
 
     // list classes with the # of students in each
@@ -200,10 +204,20 @@ class FinalProject {
     // select-class <class number> <term> selects the only section of class number in given term
     //
     // select-class <class number> <term> <section> selects specified section
+    // 
+    // ex: select-class vc567 xp8857
     private static void selectClass(String[] command){
-
+    
         // get the class(es)
         String q = "Call selectClass(?, ?, ?)";
+
+        // need at least one parameter 
+        if(command.length < 2){
+            System.out.println(
+                "No parameters provided. Format: select-classs <class number> [<term>] [<section>]"
+                );
+            return;
+        }
 
         // some array manipulation because I'm lazy...
         // (gotta add nulls to parameters)
@@ -216,7 +230,7 @@ class FinalProject {
             comList.add(null);
         }
 
-        String[] all_args = (String[]) comList.toArray();
+        String[] all_args = (String[]) comList.toArray(new String[comList.size()]);
 
         ResultSet res = runQuery(all_args, q, true);
         
@@ -236,17 +250,21 @@ class FinalProject {
         // if there are multiple classes that match the parameters, fail
         if(numRows > 1){
             System.out.println("Unable to select class; more than one class was returned.");
-            return;
-        }  
+        }
+        else if(numRows == 0){
+            System.out.println("No class found. Active class not set.");
+        } 
 
         try {
+
             if(res.first()){
-                FinalProject.ActiveClass.id = res.getInt("course_id");
+                FinalProject.ActiveClass.id = res.getInt(1);
                 FinalProject.ActiveClass.name = res.getString("course_number");
 
                 System.out.println("Active class set to: " + FinalProject.ActiveClass.name);
-                return;
-            }
+
+                
+        }
         } catch (SQLException ex) {
             System.err.println("Unable to set active class.");
             System.err.println("SQLException: " + ex.getMessage());
@@ -256,7 +274,6 @@ class FinalProject {
     private static void showClass(){
         if(FinalProject.ActiveClass.id != 0){
             System.out.println("Active class: " + FinalProject.ActiveClass.name);
-            return;
         }
     }
 }
