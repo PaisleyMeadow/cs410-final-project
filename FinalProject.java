@@ -101,6 +101,9 @@ class FinalProject {
             case "show-class":
                 showClass();
                 break;
+            case "show-students":
+                showStudents(command);
+                break;
             case "q":
                 System.exit(0);
         }
@@ -274,6 +277,40 @@ class FinalProject {
     private static void showClass(){
         if(FinalProject.ActiveClass.id != 0){
             System.out.println("Active class: " + FinalProject.ActiveClass.name);
+        }
+    }
+
+    private static void showStudents(String[] command){
+
+        if(command.length < 2){
+            System.out.println("No search string provided. Format: show-students <string>");
+            return;
+        }
+
+        String q = "SELECT student_name, username FROM Student WHERE LOWER(student_name) LIKE ? OR LOWER(username) LIKE ?";
+
+        // add % around input string, need the parameter twice
+        String s = "%" + command[1] + "%";
+        ArrayList<String> comList = new ArrayList<String>(Arrays.asList(command));
+        comList.set(1, s);
+        comList.add(2, s);
+        String[] all_args = (String[]) comList.toArray(new String[comList.size()]);
+
+        ResultSet res = runQuery(all_args, q, true);
+        
+        StringBuilder output = new StringBuilder();
+
+        try{
+            while(res.next()){
+                output.append(res.getString("student_name") + "  |  ");
+                output.append(res.getString("username") + "\n");
+            }
+
+            System.out.print(output);
+        }
+        catch(SQLException ex){
+            System.err.println("Unable to print result set.");
+            System.err.println("SQLException: " + ex.getMessage());
         }
     }
 }
