@@ -313,4 +313,17 @@ class FinalProject {
             System.err.println("SQLException: " + ex.getMessage());
         }
     }
+
+    /**
+     * grade assignmentname username grade
+     * assign the grade ‘grade’ for student
+        with user name ‘username’ for assignment ‘assignmentname’. If the student already has a
+        grade for that assignment, replace it. If the number of points exceeds the number of
+        points configured for the assignment, print a warning (showing the number of points
+        configured)
+     * @param command
+     */
+    private static void assignGrade(String[] command){
+
+    }
 }
