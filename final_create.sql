@@ -49,7 +49,9 @@ CREATE TABLE Submitted (
     grade_value INT,
     
     FOREIGN KEY (student_id) REFERENCES Student(student_id),
-    FOREIGN KEY (assignment_name) REFERENCES Assignment(assignment_name)
+    FOREIGN KEY (assignment_name) REFERENCES Assignment(assignment_name),
+    
+    PRIMARY KEY (student_id, assignment_name)
 );
 
 -- create a new class 
@@ -90,15 +92,48 @@ END$$
 
 DELIMITER ;
 
--- show categories for current (given) class
-DELIMITER //
-CREATE PROCEDURE showCategories( 
-	IN classId VARCHAR(32)
+-- grade assignmentname username grade
+--      * assign the grade ‘grade’ for student
+--         with user name ‘username’ for assignment ‘assignmentname’. If the student already has a
+--         grade for that assignment, replace it. If the number of points exceeds the number of
+--         points configured for the assignment, print a warning (showing the number of points
+--         configured)
+
+DELIMITER $$
+
+CREATE PROCEDURE assignGrade(
+	IN uname VARCHAR(64), aname VARCHAR(128), grade INT, classId INT, OUT result INT
 )
 BEGIN
-    SELECT category_name, weight FROM Category WHERE course_number = classNum;
-END //
-    
+
+-- get student id
+DECLARE sid INT DEFAULT 0;
+
+SELECT student_id INTO sid FROM Student WHERE username = uname;
+
+INSERT INTO Submitted (student_id, assignment_name, grade_value) VALUES (sid, aname, grade) ON DUPLICATE KEY UPDATE grade_value = grade;
+
+SELECT points INTO result FROM Assignment WHERE assignment_name = aname AND points < grade;
+
+SELECT result;
+-- IF pterm IS NULL THEN
+
+-- 	SELECT course_id, course_number FROM Class 
+--     WHERE course_number = pnumber 
+--     AND CAST(SUBSTR(term, 3, 4) AS SIGNED) =
+-- 		( SELECT MIN(CAST(SUBSTR(term, 3, 4) AS SIGNED)) FROM Class WHERE course_number = pnumber);
+
+-- ELSEIF psection IS NULL THEN
+
+-- 	SELECT course_id, course_number FROM Class WHERE course_number = pnumber AND term = pterm;
+
+-- ELSE
+-- 	SELECT course_id, course_number FROM Class WHERE course_number = pnumber AND term = pterm AND section = psection;
+-- END IF; 
+
+END$$
+
 DELIMITER ;
 
-
+Call assignGrade('hvxqer8573', 'Whiteflower Leafcup', 78, 2, @result);
+SELECT @result;

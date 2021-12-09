@@ -280,6 +280,12 @@ class FinalProject {
         }
     }
 
+    /**
+     * how all students with ‘string’ in their name or username
+     * (case-insensitive)
+     * Note: assuming this is for *all* students; doesn't specify on project description
+     * @param command
+     */
     private static void showStudents(String[] command){
 
         if(command.length < 2){
