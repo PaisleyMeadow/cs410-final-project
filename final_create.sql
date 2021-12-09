@@ -92,6 +92,17 @@ END$$
 
 DELIMITER ;
 
+-- select students with string (unsure if supposed to be for active class)
+DELIMITER $$
+CREATE PROCEDURE selectStudents(IN str VARCHAR(64), cid INT)
+BEGIN 
+	SELECT student_name, username FROM Student NATURAL JOIN Enrolled 
+		WHERE (LOWER(student_name) LIKE str OR LOWER(username) LIKE str) 
+        AND Enrolled.course_id = cid;
+END$$
+
+DELIMITER ;
+
 -- grade assignmentname username grade
 --      * assign the grade ‘grade’ for student
 --         with user name ‘username’ for assignment ‘assignmentname’. If the student already has a
@@ -116,24 +127,9 @@ INSERT INTO Submitted (student_id, assignment_name, grade_value) VALUES (sid, an
 SELECT points INTO result FROM Assignment WHERE assignment_name = aname AND points < grade;
 
 SELECT result;
--- IF pterm IS NULL THEN
-
--- 	SELECT course_id, course_number FROM Class 
---     WHERE course_number = pnumber 
---     AND CAST(SUBSTR(term, 3, 4) AS SIGNED) =
--- 		( SELECT MIN(CAST(SUBSTR(term, 3, 4) AS SIGNED)) FROM Class WHERE course_number = pnumber);
-
--- ELSEIF psection IS NULL THEN
-
--- 	SELECT course_id, course_number FROM Class WHERE course_number = pnumber AND term = pterm;
-
--- ELSE
--- 	SELECT course_id, course_number FROM Class WHERE course_number = pnumber AND term = pterm AND section = psection;
--- END IF; 
 
 END$$
 
 DELIMITER ;
 
 Call assignGrade('hvxqer8573', 'Whiteflower Leafcup', 78, 2, @result);
-SELECT @result;

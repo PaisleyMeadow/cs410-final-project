@@ -14,7 +14,7 @@ class FinalProject {
     // active class
     public static class ActiveClass{
         static String name = null;
-        static int id = 0;
+        static int id = -1;
     }
 
     // database connection instance
@@ -275,15 +275,18 @@ class FinalProject {
     }
 
     private static void showClass(){
-        if(FinalProject.ActiveClass.id != 0){
+        if(FinalProject.ActiveClass.id != -1){
             System.out.println("Active class: " + FinalProject.ActiveClass.name);
+        }
+        else{
+            System.out.println("No active class set.");
         }
     }
 
     /**
-     * how all students with ‘string’ in their name or username
+     * how all students with "string" in their name or username
      * (case-insensitive)
-     * Note: assuming this is for *all* students; doesn't specify on project description
+     * Note: assuming this is for students in active class
      * @param command
      */
     private static void showStudents(String[] command){
@@ -293,16 +296,18 @@ class FinalProject {
             return;
         }
 
-        String q = "SELECT student_name, username FROM Student WHERE LOWER(student_name) LIKE ? OR LOWER(username) LIKE ?";
+        if(FinalProject.ActiveClass.id == -1){
+            System.out.println("No active class set.");
+            return;
+        }
 
-        // add % around input string, need the parameter twice
+        String q = "Call selectStudents(?, " + FinalProject.ActiveClass.id + ")";
+
+        // add % around input string
         String s = "%" + command[1] + "%";
-        ArrayList<String> comList = new ArrayList<String>(Arrays.asList(command));
-        comList.set(1, s);
-        comList.add(2, s);
-        String[] all_args = (String[]) comList.toArray(new String[comList.size()]);
+        command[1] = s;
 
-        ResultSet res = runQuery(all_args, q, true);
+        ResultSet res = runQuery(command, q, true);
         
         StringBuilder output = new StringBuilder();
 
@@ -322,14 +327,14 @@ class FinalProject {
 
     /**
      * grade assignmentname username grade
-     * assign the grade ‘grade’ for student
-        with user name ‘username’ for assignment ‘assignmentname’. If the student already has a
-        grade for that assignment, replace it. If the number of points exceeds the number of
-        points configured for the assignment, print a warning (showing the number of points
-        configured)
+     * assign the grade gradefor student
+     *   with user name "username" for assignment "assignmentname". If the student already has a
+     *   grade for that assignment, replace it. If the number of points exceeds the number of
+     *  points configured for the assignment, print a warning (showing the number of points
+     *  configured)
      * @param command
      */
     private static void assignGrade(String[] command){
-
+        
     }
 }
