@@ -13,8 +13,12 @@ class FinalProject {
 
     // active class
     public static class ActiveClass{
-        static String name = null;
-        static int id = -1;
+        // static String name = null;
+        // static int id = -1;
+
+        // for testing:
+        static String name = "im773";
+        static int id = 87;
     }
 
     // database connection instance
@@ -103,6 +107,9 @@ class FinalProject {
                 break;
             case "show-students":
                 showStudents(command);
+                break;
+            case "grade":
+                assignGrade(command);
                 break;
             case "q":
                 System.exit(0);
@@ -326,7 +333,7 @@ class FinalProject {
     }
 
     /**
-     * grade assignmentname username grade
+     * grade <assignmentname> <username> <grade>
      * assign the grade gradefor student
      *   with user name "username" for assignment "assignmentname". If the student already has a
      *   grade for that assignment, replace it. If the number of points exceeds the number of
@@ -335,6 +342,47 @@ class FinalProject {
      * @param command
      */
     private static void assignGrade(String[] command){
-        
+
+    if(command.length < 4){
+        System.out.println("Missing parameters. Format: grade <student username> <assignment name> <grade>");
+        return;
+    }
+    else if(command.length > 4){
+        System.out.println("Too many parameters. Format: grade <student username> <assignment name> <grade>");
+        return;
+    }
+
+    if(FinalProject.ActiveClass.id == -1){
+        System.out.println("No active class set.");
+        return;
+    }
+
+    String q = "Call assignGrade(?, ?, ?, " + FinalProject.ActiveClass.id + ", @result)";
+
+    ResultSet res = runQuery(command, q, true);
+
+    try{
+        while(res.next()){
+            int returnVal = res.getInt("result");
+            if(returnVal > 0){
+                System.out.println("Warning: grade exceeds assignment point value (" + returnVal + "). ");
+            }
+            else if(returnVal == -1){
+                System.out.println("Student is not enrolled in active class.");
+                return;
+            }
+            else if(returnVal == -2){
+                System.out.println("Assignment not found for active class.");
+                return;
+            }
+        }
+
+        System.out.println("Grade assigned.");
+    }
+    catch(SQLException ex){
+        System.err.println("Unable to print result set.");
+        System.err.println("SQLException: " + ex.getMessage());
+    }
+
     }
 }

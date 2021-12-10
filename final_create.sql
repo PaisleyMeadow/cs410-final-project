@@ -19,12 +19,13 @@ CREATE TABLE Category (
 );
 
 CREATE TABLE Assignment ( 
+	assignment_id INT AUTO_INCREMENT NOT NULL,
 	assignment_name VARCHAR(128) UNIQUE NOT NULL, 
     points INT NOT NULL, 
     category_id INT NOT NULL, 
     
     FOREIGN KEY (category_id) REFERENCES Category(category_id),
-    PRIMARY KEY (assignment_name)
+    PRIMARY KEY (assignment_id)
 );
 
 CREATE TABLE Student ( 
@@ -45,13 +46,13 @@ CREATE TABLE Enrolled (
 
 CREATE TABLE Submitted ( 
 	student_id INT NOT NULL,
-    assignment_name VARCHAR(128) NOT NULL,
+    assignment_id INT NOT NULL,
     grade_value INT,
     
     FOREIGN KEY (student_id) REFERENCES Student(student_id),
-    FOREIGN KEY (assignment_name) REFERENCES Assignment(assignment_name),
+    FOREIGN KEY (assignment_id) REFERENCES Assignment(assignment_id),
     
-    PRIMARY KEY (student_id, assignment_name)
+    PRIMARY KEY (student_id, assignment_id)
 );
 
 -- create a new class 
@@ -117,14 +118,24 @@ CREATE PROCEDURE assignGrade(
 )
 BEGIN
 
--- get student id
 DECLARE sid INT DEFAULT 0;
+DECLARE aid INT DEFAULT 0;
 
-SELECT student_id INTO sid FROM Student WHERE username = uname;
+-- get student id
+SELECT student_id INTO sid FROM Student NATURAL JOIN Enrolled WHERE username = uname AND course_id = classId;
 
-INSERT INTO Submitted (student_id, assignment_name, grade_value) VALUES (sid, aname, grade) ON DUPLICATE KEY UPDATE grade_value = grade;
+-- get assignment id
+SELECT assignment_id INTO aid FROM Assignment NATURAL JOIN Category WHERE assignment_name = aname AND course_id = classId;
 
-SELECT points INTO result FROM Assignment WHERE assignment_name = aname AND points < grade;
+IF sid = 0 THEN
+	SET result = -1;
+ELSEIF aid = 0 THEN 
+	SET result = -2;
+ELSE
+	INSERT INTO Submitted (student_id, assignment_id, grade_value) VALUES (sid, aid, grade) ON DUPLICATE KEY UPDATE grade_value = grade;
+	
+    SELECT points INTO result FROM Assignment WHERE assignment_id = aid AND points < grade;
+END IF;
 
 SELECT result;
 
@@ -132,4 +143,4 @@ END$$
 
 DELIMITER ;
 
-Call assignGrade('hvxqer8573', 'Whiteflower Leafcup', 78, 2, @result);
+-- Call assignGrade('hvxqer8573', 'asdf', 78, 2, @result);
