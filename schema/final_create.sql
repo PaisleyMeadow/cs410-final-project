@@ -191,9 +191,6 @@ END IF;
 -- check if category weights add up to 100
 SELECT SUM(weight) INTO total_weight FROM Category NATURAL JOIN Class WHERE course_id = cid;
 
--- get total points in that category 
--- SELECT SUM(points) INTO total_cat_points FROM Assignment NATURAL JOIN Category WHERE category_id = 
-
 IF total_weight = 100 THEN
 	SET total_weight = 1;
 END IF;
@@ -210,8 +207,29 @@ END$$
 
 DELIMITER ;
 
-SELECT Submitted.grade_value FROM Assignment LEFT JOIN Submitted ON Assignment.assignment_id = Submitted.assignment_id WHERE Submitted.student_id = 1;
-SELECT * FROM Assignment;
+DELIMITER $$
+
+-- gradebook – show the current class’s gradebook: students (username, student ID, and
+-- name), along with their total grades in the class.
+CREATE PROCEDURE showGrades(
+	IN cid INT
+)	
+this_proc: BEGIN
+
+DECLARE sid INT DEFAULT 0;
+
+SELECT username, student_id, student_name, (SUM(grade_value)/SUM(points)) as Grade 
+	FROM Student 
+		NATURAL JOIN Submitted
+        NATURAL JOIN Assignment 
+        NATURAL JOIN Category
+        NATURAL JOIN Class
+	WHERE course_id = 1
+    GROUP BY username;
+
+END$$
+DELIMITER ;
+
 DELIMITER $$
 
 CREATE PROCEDURE createCategory(IN catName VARCHAR(64), catWeight DOUBLE, classID INT)
@@ -224,6 +242,7 @@ DELIMITER ;
 DELIMITER $$
 CREATE PROCEDURE createAssignment(IN assignName VARCHAR(128), catName VARCHAR(64), assignDesc TEXT, assignPoints INT, classID INT)
 BEGIN
+    -- get the category id from the name they specified and the current active class
     DECLARE cid INT DEFAULT -1;
     SELECT category_id INTO cid FROM Category WHERE category_name = catName AND course_id = classID;
 

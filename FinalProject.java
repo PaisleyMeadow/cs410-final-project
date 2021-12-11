@@ -467,27 +467,27 @@ class FinalProject {
             String cat = "";
             String t = "";
 
-            int weight = 1;
-            double totalGrade = 0;
+            float weight = 1;
+            float totalGrade = 0;
             int totalAttemptedGrade = 0;
             int totalForAttemptedAssignments = 0;
 
-            double catSubtotalGradeUnweighted = -1;
-            double catSubtotalGradeWeighted = 0;
-            int catSubtotalTotalPoints = 0;
+            float catSubtotalGradeUnweighted = -1;
+            float catSubtotalGradeWeighted = 0;
+            float catSubtotalTotalPoints = 0;
 
             while(res.next()){
                 cat = res.getString("category_name");
                 if(cat != t){
-
+ 
                     if(catSubtotalGradeUnweighted != -1){
-                        catSubtotalTotalPoints = res.getInt("catTotal");
-                        weight = res.getInt("Weight");
-
+                        catSubtotalTotalPoints = res.getFloat("catTotal");
+                        weight = res.getFloat("Weight");
+                        
                         catSubtotalGradeWeighted = (catSubtotalGradeUnweighted / catSubtotalTotalPoints) * weight;
                         totalGrade += catSubtotalGradeWeighted;
 
-                        output.append("\nWeighted Category Subtotal: " + catSubtotalGradeWeighted + "\n\n");
+                        output.append("\nWeighted Category Subtotal: " + String.format("%.5f", catSubtotalGradeWeighted) + "\n\n");
                     }
                     output.append("---" + cat + ": ---\n");
 
@@ -504,7 +504,7 @@ class FinalProject {
 
                 double grade = ((double)studentPoints/outOf);
 
-                catSubtotalGradeUnweighted += grade;
+                catSubtotalGradeUnweighted += studentPoints;
 
                 totalAttemptedGrade += studentPoints;
                 totalForAttemptedAssignments += outOf;
@@ -513,7 +513,7 @@ class FinalProject {
             }
 
             output.append("\nTotal Attempted Grade: " + totalAttemptedGrade + "/" + totalForAttemptedAssignments + "\n");
-            output.append("Total Grade: " + totalGrade + "\n\n");
+            output.append("Total Grade: " + String.format("%.5f", totalGrade) + "\n\n");
 
             System.out.println(output);  
         }
