@@ -117,6 +117,9 @@ class FinalProject {
             case "add-assignment":
                 addAssignment(command);
                 break;
+            case "add-student":
+                addStudent(command);
+                break;
             case "show-students":
                 showStudents(command);
                 break;
@@ -221,16 +224,19 @@ class FinalProject {
 
         System.out.println(output);
     }
-
-    // set the active class
-    // select-class <class number> : selects only section of that class in the most recent term;
-    // if there is multiple section that match this criteria, it fails
-    //
-    // select-class <class number> <term> selects the only section of class number in given term
-    //
-    // select-class <class number> <term> <section> selects specified section
-    // 
-    // ex: select-class vc567 xp8857
+    
+    /**
+     * set the active class
+     * select-class <class number> : selects only section of that class in the most recent term;
+     * if there is multiple section that match this criteria, it fails
+     *
+     * select-class <class number> <term> selects the only section of class number in given term
+     *
+     * select-class <class number> <term> <section> selects specified section
+     *
+     * @param command - array of arguments to be parsed
+     * @author - Paisley Meadow
+     */
     private static void selectClass(String[] command){
     
         // get the class(es)
@@ -283,7 +289,7 @@ class FinalProject {
         try {
 
             if(res.first()){
-                FinalProject.ActiveClass.id = res.getInt(1);
+                FinalProject.ActiveClass.id = res.getInt("course_id");
                 FinalProject.ActiveClass.name = res.getString("course_number");
 
                 System.out.println("Active class set to: " + FinalProject.ActiveClass.name);
@@ -482,16 +488,13 @@ class FinalProject {
         }       
 
         String q = "SELECT category_name, assignment_name, assignment_description, points FROM Category INNER JOIN Assignment ON Category.category_id = Assignment.category_id";
-        q += "WHERE course_id = " + FinalProject.ActiveClass.id + "ORDER BY category_name ASC, assignment_name ASC";
+        q = q + "WHERE course_id = " + FinalProject.ActiveClass.id + "ORDER BY category_name ASC, assignment_name ASC";
         ResultSet res = runQuery(null, q, true);
         StringBuilder output = new StringBuilder();
 
         //iterate through the result set, printing out each category name/weight
         try{
-            output.append("Category  |  ");
-            output.append("Assignment  |  ");
-            output.append("Description  |  ");
-            output.append("Points\n");
+            output.append("Category  |  Assignment  |  Description  |  Points");
             while(res.next()){
                 output.append(res.getString("category_name") + "  |  ");
                 output.append(res.getString("assignment_name") + "  |  ");
@@ -539,6 +542,62 @@ class FinalProject {
      * @author - Teddy Ramey
      */
     private static void addStudent(String[] command) {
+        //Check for an active class
+        if(FinalProject.ActiveClass.id == -1){
+            System.out.println("No active class set.");
+            return;
+        }
+        if(command.length != 5 || command.length != 2) {
+            System.out.println("Incorrect number of parameters. Format is: add-assignment <name> <Category> <Description> <points> OR add-student <username>");
+            return;
+        }
 
+        //Common Variables
+        String q;
+        String enteredName = command[3] + ", " + command[4];
+
+        //If we need to create a new Student in the database
+        if(command.length == 5) {
+            //Check if the student already exists
+            q = "SELECT username, student_name FROM Student WHERE student_id = " + command[2];
+            ResultSet res = runQuery(null, q, true);
+            try {
+                //No student with the specified studentID exists, so we create a new student
+                if(!res.next()) {
+                    q = "Call createStudent(?, ?, ?, ?)";
+                    runQuery(command, q, false);
+                }
+                //If the username for the specified user doesn't match, create a new user as well
+                else if(res.getString("username") != command[1]) {
+                    q = "Call createStudent(?, ?, ?, ?)";
+                    runQuery(command, q, false);
+                }
+                //If the student exists, check if the name is the same as the one specified
+                //If it isn't, update the student_name and tell the user we updated it
+                else if(res.getString("student_name") != enteredName) {
+                    String stringOut = "student_name updated for " + command[1] + " updated from: '";
+                    stringOut += res.getString("student_name") + "', updated to: '" + enteredName + "'";
+                    System.out.println(stringOut);
+
+                    String[] updateCommand = {command[0], command[2], enteredName};
+                    q = "Call updateStudentName(?, ?, ?)";
+                    runQuery(updateCommand, q, false);
+                }
+            }
+            catch(SQLException ex){
+                System.err.println("Error handling result set.");
+                System.err.println("SQLException: " + ex.getMessage());
+            }  
+
+            //Enroll them in the currently selected class
+            String[] enrollCommand = {command[0], command[1]};
+            q = "Call enrollStudent(?, " + FinalProject.ActiveClass.id + ")";
+            runQuery(enrollCommand, q, false);
+        }
+        //If we just need to enroll an existing student in a class
+        else {
+            q = "Call enrollStudent(?, " + FinalProject.ActiveClass.id + ")";
+            runQuery(command, q, false);
+        }
     }
 }

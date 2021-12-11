@@ -174,3 +174,33 @@ BEGIN
     VALUES (assignName, assignDesc, assignPoints, cid);
 END$$
 DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE createStudent(IN uname VARCHAR(64), studentID INT, lastName VARCHAR(31), firstName VARCHAR(31))
+BEGIN
+    DECLARE fullName VARCHAR(64);
+    SELECT CONCAT(lastName, ", ", firstName) INTO fullName;
+    INSERT INTO Student (username, student_name)
+    VALUES (uname, fullName);
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE updateStudent(IN studentID INT, fullName VARCHAR(64))
+BEGIN
+    UPDATE Student 
+    SET student_name = fullName
+    WHERE student_id = studentID;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE enrollStudent(IN uname VARCHAR(64), classID INT)
+BEGIN
+    DECLARE stuID INT DEFAULT -1;
+    SELECT student_id INTO stuID FROM Student WHERE username = uname;
+
+    INSERT INTO Enrolled (student_id, course_id)
+    VALUES (stuID, classID);
+END$$
+DELIMITER ;
