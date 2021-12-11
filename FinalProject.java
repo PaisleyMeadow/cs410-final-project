@@ -105,6 +105,15 @@ class FinalProject {
             case "show-class":
                 showClass();
                 break;
+            case "show-categories":
+                showCategories();
+                break;
+            case "add-category":
+                addCategory(command);
+                break;
+            case "show-assignment":
+                showAssignment();
+                break;
             case "show-students":
                 showStudents(command);
                 break;
@@ -113,6 +122,9 @@ class FinalProject {
                 break;
             case "q":
                 System.exit(0);
+            default:
+                System.out.println("Failed to understand command.");
+                break;
         }
 
     }
@@ -188,7 +200,7 @@ class FinalProject {
     // list classes with the # of students in each
     // list-classes
     private static void listClasses(){
-        String q = "SELECT course_number, count(student_id) as students FROM Class NATURAL JOIN Enrolled GROUP BY course_number";
+        String q = "SELECT course_number, count(student_id) as students FROM Class LEFT JOIN Enrolled ON Class.course_id = Enrolled.course_id GROUP BY course_number";
         ResultSet res = runQuery(null, q, true);
 
         StringBuilder output = new StringBuilder();
@@ -403,7 +415,30 @@ class FinalProject {
      * @author - Teddy Ramey
      */
     private static void showCategories() {
+        //Check for an active class
+        if(FinalProject.ActiveClass.id == -1){
+            System.out.println("No active class set.");
+            return;
+        }
 
+        //Declare variables
+        String q = "SELECT category_name, weight FROM Category WHERE course_id = " + FinalProject.ActiveClass.id + "ORDER BY weight DESC";
+        ResultSet res = runQuery(null, q, true);
+        StringBuilder output = new StringBuilder();
+
+        //iterate through the result set, printing out each category name/weight
+        try{
+            while(res.next()){
+                output.append(res.getString("category_name") + "  |  ");
+                output.append(res.getDouble("weight") + "\n");
+            }
+
+            System.out.print(output);
+        }
+        catch(SQLException ex){
+            System.err.println("Unable to print result set.");
+            System.err.println("SQLException: " + ex.getMessage());
+        }
     }
 
     /**  
@@ -414,7 +449,20 @@ class FinalProject {
      * @author - Teddy Ramey
      */
     private static void addCategory(String[] command) {
+        //Check for an active class
+        if(FinalProject.ActiveClass.id == -1){
+            System.out.println("No active class set.");
+            return;
+        }
 
+        if(command.length < 3) {
+            System.out.println("Missing one or more parameters. Format is: new-category <name> <weight>");
+            return;
+        }
+
+        //Declare variables
+        String q = "Call createCategory(?, ?, " + FinalProject.ActiveClass.id + ")";
+        runQuery(command, q, false);
     }
 
     /**
@@ -424,7 +472,34 @@ class FinalProject {
      * @author - Teddy Ramey
      */
     private static void showAssignment() {
+         //Check for an active class
+         if(FinalProject.ActiveClass.id == -1){
+            System.out.println("No active class set.");
+            return;
+        }       
 
+        String q = "SELECT category_name, assignment_name, points FROM Category INNER JOIN Assignment ON Category.category_id = Assignment.category_id";
+        q += "WHERE course_id = " + FinalProject.ActiveClass.id + "ORDER BY category_name ASC, assignment_name ASC";
+        ResultSet res = runQuery(null, q, true);
+        StringBuilder output = new StringBuilder();
+
+        //iterate through the result set, printing out each category name/weight
+        try{
+            output.append("Category  |  ");
+            output.append("Assignment  |  ");
+            output.append("Points\n");
+            while(res.next()){
+                output.append(res.getString("category_name") + "  |  ");
+                output.append(res.getString("assignment_name") + "  |  ");
+                output.append(res.getInt("points") + "\n");
+            }
+
+            System.out.print(output);
+        }
+        catch(SQLException ex){
+            System.err.println("Unable to print result set.");
+            System.err.println("SQLException: " + ex.getMessage());
+        }        
     }
 
     /**
@@ -446,6 +521,6 @@ class FinalProject {
      * @author - Teddy Ramey
      */
     private static void addStudent(String[] command) {
-        
+
     }
 }

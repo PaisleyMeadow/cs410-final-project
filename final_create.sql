@@ -153,3 +153,11 @@ END$$
 DELIMITER ;
 
 -- Call assignGrade('hvxqer8573', 'asdf', 78, 2, @result);
+
+DELIMITER $$
+CREATE PROCEDURE createCategory(IN catName VARCHAR(64), catWeight DOUBLE, classID INT)
+BEGIN
+    INSERT INTO Category (category_name, weight, course_id)
+    VALUES (catName, catWeight, classID);
+END$$
+DELIMITER ;
