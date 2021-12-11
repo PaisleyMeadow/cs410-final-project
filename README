@@ -1,0 +1,21 @@
+IMPLEMENTATION
+Our implementation of the final project included a few different aspects that were repeated for each command.
+
+We used stored procedures on our database to safely add data to our various tables. These are extremely useful as they basically act as a SQL function. We were able to run 
+multiple queries in one procedure and use the returned values in other queries. This is super useful as it can reduce the complexity of certain operations, though most queries 
+were fairly simple.
+
+We put one of our databases port/password information into a secrets file in the same directory as our java file to let our program have easy access to the database. We could 
+theoretically move to some other database on onyx and not have to change anything in our code. Once we both got our connections working by updating our jdbc drivers the connection
+was set and forget.
+
+Our program starts by connecting to the database, and then looping on user input until the user decides to quit, or our program crashes. We then break user input into an array 
+of strings that can easily be passed between funnctions. Then user input is compared in a switch-case block, which runs the respective function for each command.
+These functions are all pretty simple, most of the complex actions happen in the SQL queries. They do some simple error checking for parameter number or making sure you have
+an active class set, and then run a query. If the command is supposed to output data to the user, the function will iterate through the result set and print out the relevant data
+to the user.
+
+HOW TO COMPILE/RUN
+On onyx run the following commands from the submitted directory:
+  javac FinalProject.java
+  java FinalProject
