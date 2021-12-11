@@ -21,6 +21,7 @@ CREATE TABLE Category (
 CREATE TABLE Assignment ( 
 	assignment_id INT AUTO_INCREMENT NOT NULL,
 	assignment_name VARCHAR(128) UNIQUE NOT NULL, 
+    assignment_description TEXT,
     points INT NOT NULL, 
     category_id INT NOT NULL, 
     
@@ -159,5 +160,17 @@ CREATE PROCEDURE createCategory(IN catName VARCHAR(64), catWeight DOUBLE, classI
 BEGIN
     INSERT INTO Category (category_name, weight, course_id)
     VALUES (catName, catWeight, classID);
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE createAssignment(IN assignName VARCHAR(128), catName VARCHAR(64), assignDesc TEXT, assignPoints INT, classID INT)
+BEGIN
+    --get the category id from the name they specified and the current active class
+    DECLARE cid INT DEFAULT -1;
+    SELECT category_id INTO cid FROM Category WHERE category_name = catName AND course_id = classID;
+
+    INSERT INTO Assignment (assignment_name, assignment_description, points, category_id)
+    VALUES (assignName, assignDesc, assignPoints, cid);
 END$$
 DELIMITER ;

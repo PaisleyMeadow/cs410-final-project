@@ -114,6 +114,9 @@ class FinalProject {
             case "show-assignment":
                 showAssignment();
                 break;
+            case "add-assignment":
+                addAssignment(command);
+                break;
             case "show-students":
                 showStudents(command);
                 break;
@@ -478,7 +481,7 @@ class FinalProject {
             return;
         }       
 
-        String q = "SELECT category_name, assignment_name, points FROM Category INNER JOIN Assignment ON Category.category_id = Assignment.category_id";
+        String q = "SELECT category_name, assignment_name, assignment_description, points FROM Category INNER JOIN Assignment ON Category.category_id = Assignment.category_id";
         q += "WHERE course_id = " + FinalProject.ActiveClass.id + "ORDER BY category_name ASC, assignment_name ASC";
         ResultSet res = runQuery(null, q, true);
         StringBuilder output = new StringBuilder();
@@ -487,10 +490,12 @@ class FinalProject {
         try{
             output.append("Category  |  ");
             output.append("Assignment  |  ");
+            output.append("Description  |  ");
             output.append("Points\n");
             while(res.next()){
                 output.append(res.getString("category_name") + "  |  ");
                 output.append(res.getString("assignment_name") + "  |  ");
+                output.append(res.getString("assignment_description") + "  |  ");
                 output.append(res.getInt("points") + "\n");
             }
 
@@ -504,13 +509,26 @@ class FinalProject {
 
     /**
      * add-assignment <name> <Category> <Description> <points> 
-     * Add a category of a speciified name, description, and point value to the category selected.
+     * Add an assignment of a speciified name, description, and point value to the category selected.
      * If a class is not selected, don't run a query and tell the user to select a class.
      * @param command - array of strings holding assignmnet specifications detailed above
      * @author - Teddy Ramey
      */
     private static void addAssignment(String[] command) {
+        //Check for an active class
+        if(FinalProject.ActiveClass.id == -1){
+            System.out.println("No active class set.");
+            return;
+        }
+        if(command.length < 5) {
+            System.out.println("Missing one or more parameters. Format is: add-assignment <name> <Category> <Description> <points>");
+            return;
+        }
 
+        //Call runQuery to parse the command parameter into assignment name, points, etc 
+        //and call the sql procedure to input into database
+        String q = "Call createAssignment(?, ?, ?, ?, " + FinalProject.ActiveClass.id + ")";
+        runQuery(command, q, false);
     }
 
     /**
