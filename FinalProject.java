@@ -5,9 +5,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
 
+/**
+ * 
+ * Final Project for CS 410: Databases
+ * Fall 2021, Dr. Spezzano
+ * @author Paisley Davis
+ * @author Teddy Ramey
+ * 
+ */
 class FinalProject {
 
-    // filename for screts
+    // filename for secrets
     // should contain port number, schema name, and mysql password
     private static String SECRETS_FILE = "secrets";
 
@@ -17,8 +25,8 @@ class FinalProject {
         // static int id = -1;
 
         // for testing:
-        static String name = "im773";
-        static int id = 87;
+        static String name = "CS410";
+        static int id = 1;
     }
 
     // database connection instance
@@ -125,6 +133,9 @@ class FinalProject {
                 break;
             case "grade":
                 assignGrade(command);
+                break;
+            case "student-grades":
+                showGrade(command);
                 break;
             case "q":
                 System.exit(0);
@@ -433,6 +444,80 @@ class FinalProject {
      */
     private static void showGrade(String[] commands){
 
+        if(commands.length < 2){
+            System.out.println("Format: student-grades <username>");
+            return;
+        }
+        String q = "Call showStudentGrades(?, " + FinalProject.ActiveClass.id + ")";
+        ResultSet res = runQuery(commands, q, true);
+
+        try{
+
+            StringBuilder output = new StringBuilder();
+            String cat = "";
+            String t = "";
+
+            int weight = 1;
+            double totalGrade = 0;
+            int totalAttemptedGrade = 0;
+            int totalForAttemptedAssignments = 0;
+
+            double catSubtotalGradeUnweighted = -1;
+            double catSubtotalGradeWeighted = 0;
+            int catSubtotalTotalPoints = 0;
+
+            while(res.next()){
+                cat = res.getString("category_name");
+                if(cat != t){
+
+                    if(catSubtotalGradeUnweighted != -1){
+                        catSubtotalTotalPoints = res.getInt("catTotal");
+                        weight = res.getInt("Weight");
+
+                        catSubtotalGradeWeighted = (catSubtotalGradeUnweighted / catSubtotalTotalPoints) * weight;
+                        totalGrade += catSubtotalGradeWeighted;
+
+                        output.append("\nWeighted Category Subtotal: " + catSubtotalGradeWeighted + "\n\n");
+                    }
+                    output.append("---" + cat + ": ---\n");
+
+                    catSubtotalGradeUnweighted = 0;
+                    catSubtotalGradeWeighted = 0;
+                    catSubtotalTotalPoints = 0;
+                }
+                t = cat;
+                output.append(res.getString("assignment_name") + ": ");
+
+                // calculate the grade for homework
+                int studentPoints = res.getInt("Grade");
+                int outOf = res.getInt("Total");
+
+                double grade = ((double)studentPoints/outOf);
+
+                catSubtotalGradeUnweighted += grade;
+
+                totalAttemptedGrade += studentPoints;
+                totalForAttemptedAssignments += outOf;
+
+                output.append(grade + " (" + studentPoints + "/" + outOf + ")\n");
+            }
+
+            output.append("\nTotal Attempted Grade: " + totalAttemptedGrade + "/" + totalForAttemptedAssignments + "\n");
+            output.append("Total Grade: " + totalGrade + "\n\n");
+
+            System.out.println(output);  
+        }
+        catch(SQLException ex){
+            try {
+                if(res.getInt(1) == 0){
+                    System.out.println("Student is not enrolled in active class");
+                    return;
+                }
+            } catch (SQLException e) {
+                System.err.println("Unable to print result set.");
+                System.err.println("SQLException: " + ex.getMessage());
+            }
+        }
     }
 
     /** 

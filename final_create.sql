@@ -178,31 +178,42 @@ this_proc: BEGIN
 
 DECLARE sid INT DEFAULT 0;
 DECLARE total_weight INT DEFAULT 0;
+DECLARE total_cat_points INT DEFAULT 0;
 
 -- get student id
-SELECT student_id INTO sid FROM Student NATURAL JOIN Enrolled WHERE username = uname AND course_id = classId;
+SELECT student_id INTO sid FROM Student NATURAL JOIN Enrolled WHERE username = uname AND course_id = cid;
 
 IF sid = 0 THEN
+	SELECT sid; 
 	LEAVE this_proc;
 END IF;
 
--- check if category weights add up to 100, and fix if not
-SELECT SUM(weight) INTO final_weight FROM Category NATURAL JOIN Class WHERE course_id = cid;
+-- check if category weights add up to 100
+SELECT SUM(weight) INTO total_weight FROM Category NATURAL JOIN Class WHERE course_id = cid;
+
+-- get total points in that category 
+-- SELECT SUM(points) INTO total_cat_points FROM Assignment NATURAL JOIN Category WHERE category_id = 
 
 IF total_weight = 100 THEN
 	SET total_weight = 1;
 END IF;
 
-SELECT assignment_name, points, SUM(points), category_name FROM Assignment 
-	NATURAL JOIN Submitted 
-    NATURAL JOIN Category 
-    WHERE student_id = sid;
+SELECT assignment_name, grade_value AS Grade, points as Total, weight/total_weight AS Weight, category_name, category_id AS catId,
+	(SELECT SUM(points) FROM Assignment NATURAL JOIN Category GROUP BY category_id HAVING category_id = catId) AS catTotal
+	FROM Assignment 
+		NATURAL JOIN Submitted
+		NATURAL JOIN Category 
+    WHERE student_id = sid AND course_id = cid
+    GROUP BY category_name, assignment_name;
 
 END$$
 
--- Call assignGrade('hvxqer8573', 'asdf', 78, 2, @result);
+DELIMITER ;
 
+SELECT Submitted.grade_value FROM Assignment LEFT JOIN Submitted ON Assignment.assignment_id = Submitted.assignment_id WHERE Submitted.student_id = 1;
+SELECT * FROM Assignment;
 DELIMITER $$
+
 CREATE PROCEDURE createCategory(IN catName VARCHAR(64), catWeight DOUBLE, classID INT)
 BEGIN
     INSERT INTO Category (category_name, weight, course_id)
