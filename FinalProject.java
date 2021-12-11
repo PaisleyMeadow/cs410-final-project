@@ -291,33 +291,43 @@ class FinalProject {
     }
 
     /**
-     * how all students with "string" in their name or username
-     * (case-insensitive)
-     * Note: assuming this is for students in active class
-     * @param command
+     * show-students <substring> OR show-students
+     * show either all students for the currently selected class
+     * or show all students with <substring> in their name or username(case-insensitive)
+     * If a class is not selected, don't run a query and tell the user to select a class.
+     * @param command - either has substring, or is len=1 and tells us to show all students
+     * @author - Paisley Meadow, Teddy Ramey
      */
     private static void showStudents(String[] command){
+        //declare variables
+        ResultSet res;
+        StringBuilder output;
+        String q;
 
-        if(command.length < 2){
-            System.out.println("No search string provided. Format: show-students <string>");
-            return;
-        }
-
+        //Check if an active class exists. If not tell the user and return
         if(FinalProject.ActiveClass.id == -1){
             System.out.println("No active class set.");
             return;
         }
 
-        String q = "Call selectStudents(?, " + FinalProject.ActiveClass.id + ")";
+        //Case where user wants all students for the active class
+        if(command.length < 2){
+            q = "Call selectAllStudents(" + FinalProject.ActiveClass.id + ")";
+        }
+        //Case where we compare student name/username against a string
+        else {
+            // add % around input string
+            String s = "%" + command[1] + "%";
+            command[1] = s;
 
-        // add % around input string
-        String s = "%" + command[1] + "%";
-        command[1] = s;
+            q = "Call selectStudents(?, " + FinalProject.ActiveClass.id + ")";
+        }
 
-        ResultSet res = runQuery(command, q, true);
-        
-        StringBuilder output = new StringBuilder();
+        //Call the correct query (based on the above if/else)
+        res = runQuery(command, q, true);
+        output = new StringBuilder();
 
+        //iterate through the result set, printing out each pair of student/username
         try{
             while(res.next()){
                 output.append(res.getString("student_name") + "  |  ");
@@ -384,5 +394,58 @@ class FinalProject {
         System.err.println("SQLException: " + ex.getMessage());
     }
 
+    }
+
+    /** 
+     * show-categories
+     * Show the categories and their respective weights for the currently selected class.
+     * If a class is not selected, don't run a query and tell the user to select a class.
+     * @author - Teddy Ramey
+     */
+    private static void showCategories() {
+
+    }
+
+    /**  
+     * add-category <name> <weight>
+     * Add a category of name <name> and weight <weight> to the currently selected class.
+     * If a class is not selected, don't run a query and tell the user to select a class.
+     * @param command - array of strings representing the command, name, and weight
+     * @author - Teddy Ramey
+     */
+    private static void addCategory(String[] command) {
+
+    }
+
+    /**
+     * show-assignment
+     * List the assignments and their points for the currently selected class grouped by category.
+     * If a class is not selected, don't run a query and tell the user to select a class.
+     * @author - Teddy Ramey
+     */
+    private static void showAssignment() {
+
+    }
+
+    /**
+     * add-assignment <name> <Category> <Description> <points> 
+     * Add a category of a speciified name, description, and point value to the category selected.
+     * If a class is not selected, don't run a query and tell the user to select a class.
+     * @param command - array of strings holding assignmnet specifications detailed above
+     * @author - Teddy Ramey
+     */
+    private static void addAssignment(String[] command) {
+
+    }
+
+    /**
+     * add-student <username> <studentid> <Last> <First> OR add-student <username>
+     * Add a student with specified metadata to our Student table and enroll them in the selected class.
+     * OR enroll the student specified by <username> to the currently selected class.
+     * @param command - array of strings holding student specifications
+     * @author - Teddy Ramey
+     */
+    private static void addStudent(String[] command) {
+        
     }
 }

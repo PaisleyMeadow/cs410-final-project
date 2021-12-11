@@ -93,6 +93,15 @@ END$$
 
 DELIMITER ;
 
+-- Select all students for active class
+DELIMITER $$
+CREATE PROCEDURE selectAllStudents(IN cid INT)
+BEGIN
+    SELECT student_name, username FROM Student NATURAL JOIN Enrolled
+        WHERE Enrolled.course_id = cid;
+END$$
+DELIMITER ;
+
 -- select students with string (unsure if supposed to be for active class)
 DELIMITER $$
 CREATE PROCEDURE selectStudents(IN str VARCHAR(64), cid INT)
