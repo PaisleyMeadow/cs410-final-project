@@ -17,8 +17,8 @@ class FinalProject {
         // static int id = -1;
 
         // for testing:
-        static String name = "im773";
-        static int id = 87;
+        static String name = "CS410";
+        static int id = 1;
     }
 
     // database connection instance
@@ -431,7 +431,7 @@ class FinalProject {
         }
 
         //Declare variables
-        String q = "SELECT category_name, weight FROM Category WHERE course_id = " + FinalProject.ActiveClass.id + "ORDER BY weight DESC";
+        String q = "SELECT category_name, weight FROM Category WHERE course_id = " + FinalProject.ActiveClass.id + " ORDER BY weight DESC";
         ResultSet res = runQuery(null, q, true);
         StringBuilder output = new StringBuilder();
 
@@ -487,14 +487,14 @@ class FinalProject {
             return;
         }       
 
-        String q = "SELECT category_name, assignment_name, assignment_description, points FROM Category INNER JOIN Assignment ON Category.category_id = Assignment.category_id";
-        q = q + "WHERE course_id = " + FinalProject.ActiveClass.id + "ORDER BY category_name ASC, assignment_name ASC";
+        String q = "SELECT category_name, assignment_name, assignment_description, points FROM Assignment INNER JOIN Category ON Assignment.category_id = Category.category_id ";
+        q = q + "WHERE course_id = " + FinalProject.ActiveClass.id + " ORDER BY category_name ASC, assignment_name ASC";
         ResultSet res = runQuery(null, q, true);
         StringBuilder output = new StringBuilder();
 
         //iterate through the result set, printing out each category name/weight
         try{
-            output.append("Category  |  Assignment  |  Description  |  Points");
+            output.append("Category  |  Assignment  |  Description  |  Points\n");
             while(res.next()){
                 output.append(res.getString("category_name") + "  |  ");
                 output.append(res.getString("assignment_name") + "  |  ");
