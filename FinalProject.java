@@ -94,6 +94,7 @@ class FinalProject {
         }
 
             // System.exit(1);
+        scanner.close();
     }
 
     private static void parseCommand(String s) {
@@ -534,7 +535,7 @@ class FinalProject {
         }
 
         //Declare variables
-        String q = "SELECT category_name, weight FROM Category WHERE course_id = " + FinalProject.ActiveClass.id + "ORDER BY weight DESC";
+        String q = "SELECT category_name, weight FROM Category WHERE course_id = " + FinalProject.ActiveClass.id + " ORDER BY weight DESC";
         ResultSet res = runQuery(null, q, true);
         StringBuilder output = new StringBuilder();
 
@@ -590,14 +591,14 @@ class FinalProject {
             return;
         }       
 
-        String q = "SELECT category_name, assignment_name, assignment_description, points FROM Category INNER JOIN Assignment ON Category.category_id = Assignment.category_id";
-        q = q + "WHERE course_id = " + FinalProject.ActiveClass.id + "ORDER BY category_name ASC, assignment_name ASC";
+        String q = "SELECT category_name, assignment_name, assignment_description, points FROM Assignment INNER JOIN Category ON Assignment.category_id = Category.category_id ";
+        q = q + "WHERE course_id = " + FinalProject.ActiveClass.id + " ORDER BY category_name ASC, assignment_name ASC";
         ResultSet res = runQuery(null, q, true);
         StringBuilder output = new StringBuilder();
 
         //iterate through the result set, printing out each category name/weight
         try{
-            output.append("Category  |  Assignment  |  Description  |  Points");
+            output.append("Category  |  Assignment  |  Description  |  Points\n");
             while(res.next()){
                 output.append(res.getString("category_name") + "  |  ");
                 output.append(res.getString("assignment_name") + "  |  ");
@@ -650,17 +651,18 @@ class FinalProject {
             System.out.println("No active class set.");
             return;
         }
-        if(command.length != 5 || command.length != 2) {
+        if(command.length != 5 && command.length != 2) {
             System.out.println("Incorrect number of parameters. Format is: add-assignment <name> <Category> <Description> <points> OR add-student <username>");
             return;
         }
 
         //Common Variables
         String q;
-        String enteredName = command[3] + ", " + command[4];
 
         //If we need to create a new Student in the database
         if(command.length == 5) {
+            String enteredName = command[3] + ", " + command[4];
+
             //Check if the student already exists
             q = "SELECT username, student_name FROM Student WHERE student_id = " + command[2];
             ResultSet res = runQuery(null, q, true);

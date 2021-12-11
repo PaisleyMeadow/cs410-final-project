@@ -224,7 +224,6 @@ DELIMITER ;
 DELIMITER $$
 CREATE PROCEDURE createAssignment(IN assignName VARCHAR(128), catName VARCHAR(64), assignDesc TEXT, assignPoints INT, classID INT)
 BEGIN
-    --get the category id from the name they specified and the current active class
     DECLARE cid INT DEFAULT -1;
     SELECT category_id INTO cid FROM Category WHERE category_name = catName AND course_id = classID;
 
