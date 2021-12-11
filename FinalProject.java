@@ -105,6 +105,21 @@ class FinalProject {
             case "show-class":
                 showClass();
                 break;
+            case "show-categories":
+                showCategories();
+                break;
+            case "add-category":
+                addCategory(command);
+                break;
+            case "show-assignment":
+                showAssignment();
+                break;
+            case "add-assignment":
+                addAssignment(command);
+                break;
+            case "add-student":
+                addStudent(command);
+                break;
             case "show-students":
                 showStudents(command);
                 break;
@@ -113,6 +128,9 @@ class FinalProject {
                 break;
             case "q":
                 System.exit(0);
+            default:
+                System.out.println("Failed to understand command.");
+                break;
         }
 
     }
@@ -188,7 +206,7 @@ class FinalProject {
     // list classes with the # of students in each
     // list-classes
     private static void listClasses(){
-        String q = "SELECT course_number, count(student_id) as students FROM Class NATURAL JOIN Enrolled GROUP BY course_number";
+        String q = "SELECT course_number, count(student_id) as students FROM Class LEFT JOIN Enrolled ON Class.course_id = Enrolled.course_id GROUP BY course_number";
         ResultSet res = runQuery(null, q, true);
 
         StringBuilder output = new StringBuilder();
@@ -206,16 +224,19 @@ class FinalProject {
 
         System.out.println(output);
     }
-
-    // set the active class
-    // select-class <class number> : selects only section of that class in the most recent term;
-    // if there is multiple section that match this criteria, it fails
     
-    // select-class <class number> <term> selects the only section of class number in given term
-    
-    // select-class <class number> <term> <section> selects specified section
-    
-    // ex: select-class vc567 xp8857
+    /**
+     * set the active class
+     * select-class <class number> : selects only section of that class in the most recent term;
+     * if there is multiple section that match this criteria, it fails
+     *
+     * select-class <class number> <term> selects the only section of class number in given term
+     *
+     * select-class <class number> <term> <section> selects specified section
+     *
+     * @param command - array of arguments to be parsed
+     * @author - Paisley Meadow
+     */
     private static void selectClass(String[] command){
     
         // get the class(es)
@@ -268,7 +289,7 @@ class FinalProject {
         try {
 
             if(res.first()){
-                FinalProject.ActiveClass.id = res.getInt(1);
+                FinalProject.ActiveClass.id = res.getInt("course_id");
                 FinalProject.ActiveClass.name = res.getString("course_number");
 
                 System.out.println("Active class set to: " + FinalProject.ActiveClass.name);
@@ -291,33 +312,43 @@ class FinalProject {
     }
 
     /**
-     * show all students with "string" in their name or username
-     * (case-insensitive)
-     * Note: assuming this is for students in active class
-     * @param command user input split into array, expected format: [command, search string]
+     * show-students <substring> OR show-students
+     * show either all students for the currently selected class
+     * or show all students with <substring> in their name or username(case-insensitive)
+     * If a class is not selected, don't run a query and tell the user to select a class.
+     * @param command - either has substring, or is len=1 and tells us to show all students
+     * @author - Paisley Meadow, Teddy Ramey
      */
     private static void showStudents(String[] command){
+        //declare variables
+        ResultSet res;
+        StringBuilder output;
+        String q;
 
-        if(command.length < 2){
-            System.out.println("No search string provided. Format: show-students <string>");
-            return;
-        }
-
+        //Check if an active class exists. If not tell the user and return
         if(FinalProject.ActiveClass.id == -1){
             System.out.println("No active class set.");
             return;
         }
 
-        String q = "Call selectStudents(?, " + FinalProject.ActiveClass.id + ")";
+        //Case where user wants all students for the active class
+        if(command.length < 2){
+            q = "Call selectAllStudents(" + FinalProject.ActiveClass.id + ")";
+        }
+        //Case where we compare student name/username against a string
+        else {
+            // add % around input string
+            String s = "%" + command[1] + "%";
+            command[1] = s;
 
-        // add % around input string
-        String s = "%" + command[1] + "%";
-        command[1] = s;
+            q = "Call selectStudents(?, " + FinalProject.ActiveClass.id + ")";
+        }
 
-        ResultSet res = runQuery(command, q, true);
-        
-        StringBuilder output = new StringBuilder();
+        //Call the correct query (based on the above if/else)
+        res = runQuery(command, q, true);
+        output = new StringBuilder();
 
+        //iterate through the result set, printing out each pair of student/username
         try{
             while(res.next()){
                 output.append(res.getString("student_name") + "  |  ");
@@ -402,5 +433,189 @@ class FinalProject {
      */
     private static void showGrade(String[] commands){
 
+    }
+
+    /** 
+     * show-categories
+     * Show the categories and their respective weights for the currently selected class.
+     * If a class is not selected, don't run a query and tell the user to select a class.
+     * @author - Teddy Ramey
+     */
+    private static void showCategories() {
+        //Check for an active class
+        if(FinalProject.ActiveClass.id == -1){
+            System.out.println("No active class set.");
+            return;
+        }
+
+        //Declare variables
+        String q = "SELECT category_name, weight FROM Category WHERE course_id = " + FinalProject.ActiveClass.id + "ORDER BY weight DESC";
+        ResultSet res = runQuery(null, q, true);
+        StringBuilder output = new StringBuilder();
+
+        //iterate through the result set, printing out each category name/weight
+        try{
+            while(res.next()){
+                output.append(res.getString("category_name") + "  |  ");
+                output.append(res.getDouble("weight") + "\n");
+            }
+
+            System.out.print(output);
+        }
+        catch(SQLException ex){
+            System.err.println("Unable to print result set.");
+            System.err.println("SQLException: " + ex.getMessage());
+        }
+    }
+
+    /**  
+     * add-category <name> <weight>
+     * Add a category of name <name> and weight <weight> to the currently selected class.
+     * If a class is not selected, don't run a query and tell the user to select a class.
+     * @param command - array of strings representing the command, name, and weight
+     * @author - Teddy Ramey
+     */
+    private static void addCategory(String[] command) {
+        //Check for an active class
+        if(FinalProject.ActiveClass.id == -1){
+            System.out.println("No active class set.");
+            return;
+        }
+
+        if(command.length < 3) {
+            System.out.println("Missing one or more parameters. Format is: new-category <name> <weight>");
+            return;
+        }
+
+        //Declare variables
+        String q = "Call createCategory(?, ?, " + FinalProject.ActiveClass.id + ")";
+        runQuery(command, q, false);
+    }
+
+    /**
+     * show-assignment
+     * List the assignments and their points for the currently selected class grouped by category.
+     * If a class is not selected, don't run a query and tell the user to select a class.
+     * @author - Teddy Ramey
+     */
+    private static void showAssignment() {
+         //Check for an active class
+         if(FinalProject.ActiveClass.id == -1){
+            System.out.println("No active class set.");
+            return;
+        }       
+
+        String q = "SELECT category_name, assignment_name, assignment_description, points FROM Category INNER JOIN Assignment ON Category.category_id = Assignment.category_id";
+        q = q + "WHERE course_id = " + FinalProject.ActiveClass.id + "ORDER BY category_name ASC, assignment_name ASC";
+        ResultSet res = runQuery(null, q, true);
+        StringBuilder output = new StringBuilder();
+
+        //iterate through the result set, printing out each category name/weight
+        try{
+            output.append("Category  |  Assignment  |  Description  |  Points");
+            while(res.next()){
+                output.append(res.getString("category_name") + "  |  ");
+                output.append(res.getString("assignment_name") + "  |  ");
+                output.append(res.getString("assignment_description") + "  |  ");
+                output.append(res.getInt("points") + "\n");
+            }
+
+            System.out.print(output);
+        }
+        catch(SQLException ex){
+            System.err.println("Unable to print result set.");
+            System.err.println("SQLException: " + ex.getMessage());
+        }        
+    }
+
+    /**
+     * add-assignment <name> <Category> <Description> <points> 
+     * Add an assignment of a speciified name, description, and point value to the category selected.
+     * If a class is not selected, don't run a query and tell the user to select a class.
+     * @param command - array of strings holding assignmnet specifications detailed above
+     * @author - Teddy Ramey
+     */
+    private static void addAssignment(String[] command) {
+        //Check for an active class
+        if(FinalProject.ActiveClass.id == -1){
+            System.out.println("No active class set.");
+            return;
+        }
+        if(command.length < 5) {
+            System.out.println("Missing one or more parameters. Format is: add-assignment <name> <Category> <Description> <points>");
+            return;
+        }
+
+        //Call runQuery to parse the command parameter into assignment name, points, etc 
+        //and call the sql procedure to input into database
+        String q = "Call createAssignment(?, ?, ?, ?, " + FinalProject.ActiveClass.id + ")";
+        runQuery(command, q, false);
+    }
+
+    /**
+     * add-student <username> <studentid> <Last> <First> OR add-student <username>
+     * Add a student with specified metadata to our Student table and enroll them in the selected class.
+     * OR enroll the student specified by <username> to the currently selected class.
+     * @param command - array of strings holding student specifications
+     * @author - Teddy Ramey
+     */
+    private static void addStudent(String[] command) {
+        //Check for an active class
+        if(FinalProject.ActiveClass.id == -1){
+            System.out.println("No active class set.");
+            return;
+        }
+        if(command.length != 5 || command.length != 2) {
+            System.out.println("Incorrect number of parameters. Format is: add-assignment <name> <Category> <Description> <points> OR add-student <username>");
+            return;
+        }
+
+        //Common Variables
+        String q;
+        String enteredName = command[3] + ", " + command[4];
+
+        //If we need to create a new Student in the database
+        if(command.length == 5) {
+            //Check if the student already exists
+            q = "SELECT username, student_name FROM Student WHERE student_id = " + command[2];
+            ResultSet res = runQuery(null, q, true);
+            try {
+                //No student with the specified studentID exists, so we create a new student
+                if(!res.next()) {
+                    q = "Call createStudent(?, ?, ?, ?)";
+                    runQuery(command, q, false);
+                }
+                //If the username for the specified user doesn't match, create a new user as well
+                else if(res.getString("username") != command[1]) {
+                    q = "Call createStudent(?, ?, ?, ?)";
+                    runQuery(command, q, false);
+                }
+                //If the student exists, check if the name is the same as the one specified
+                //If it isn't, update the student_name and tell the user we updated it
+                else if(res.getString("student_name") != enteredName) {
+                    String stringOut = "student_name updated for " + command[1] + " updated from: '";
+                    stringOut += res.getString("student_name") + "', updated to: '" + enteredName + "'";
+                    System.out.println(stringOut);
+
+                    String[] updateCommand = {command[0], command[2], enteredName};
+                    q = "Call updateStudentName(?, ?, ?)";
+                    runQuery(updateCommand, q, false);
+                }
+            }
+            catch(SQLException ex){
+                System.err.println("Error handling result set.");
+                System.err.println("SQLException: " + ex.getMessage());
+            }  
+
+            //Enroll them in the currently selected class
+            String[] enrollCommand = {command[0], command[1]};
+            q = "Call enrollStudent(?, " + FinalProject.ActiveClass.id + ")";
+            runQuery(enrollCommand, q, false);
+        }
+        //If we just need to enroll an existing student in a class
+        else {
+            q = "Call enrollStudent(?, " + FinalProject.ActiveClass.id + ")";
+            runQuery(command, q, false);
+        }
     }
 }
