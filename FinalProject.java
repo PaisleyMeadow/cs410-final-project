@@ -210,11 +210,11 @@ class FinalProject {
     // set the active class
     // select-class <class number> : selects only section of that class in the most recent term;
     // if there is multiple section that match this criteria, it fails
-    //
+    
     // select-class <class number> <term> selects the only section of class number in given term
-    //
+    
     // select-class <class number> <term> <section> selects specified section
-    // 
+    
     // ex: select-class vc567 xp8857
     private static void selectClass(String[] command){
     
@@ -291,10 +291,10 @@ class FinalProject {
     }
 
     /**
-     * how all students with "string" in their name or username
+     * show all students with "string" in their name or username
      * (case-insensitive)
      * Note: assuming this is for students in active class
-     * @param command
+     * @param command user input split into array, expected format: [command, search string]
      */
     private static void showStudents(String[] command){
 
@@ -339,50 +339,68 @@ class FinalProject {
      *   grade for that assignment, replace it. If the number of points exceeds the number of
      *  points configured for the assignment, print a warning (showing the number of points
      *  configured)
-     * @param command
+     * @param command user input split into array, expected format: [command, assignment name, username, grade]
      */
     private static void assignGrade(String[] command){
 
-    if(command.length < 4){
-        System.out.println("Missing parameters. Format: grade <student username> <assignment name> <grade>");
-        return;
-    }
-    else if(command.length > 4){
-        System.out.println("Too many parameters. Format: grade <student username> <assignment name> <grade>");
-        return;
-    }
-
-    if(FinalProject.ActiveClass.id == -1){
-        System.out.println("No active class set.");
-        return;
-    }
-
-    String q = "Call assignGrade(?, ?, ?, " + FinalProject.ActiveClass.id + ", @result)";
-
-    ResultSet res = runQuery(command, q, true);
-
-    try{
-        while(res.next()){
-            int returnVal = res.getInt("result");
-            if(returnVal > 0){
-                System.out.println("Warning: grade exceeds assignment point value (" + returnVal + "). ");
-            }
-            else if(returnVal == -1){
-                System.out.println("Student is not enrolled in active class.");
-                return;
-            }
-            else if(returnVal == -2){
-                System.out.println("Assignment not found for active class.");
-                return;
-            }
+        if(command.length < 4){
+            System.out.println("Missing parameters. Format: grade <student username> <assignment name> <grade>");
+            return;
+        }
+        else if(command.length > 4){
+            System.out.println("Too many parameters. Format: grade <student username> <assignment name> <grade>");
+            return;
         }
 
-        System.out.println("Grade assigned.");
+        if(FinalProject.ActiveClass.id == -1){
+            System.out.println("No active class set.");
+            return;
+        }
+
+        String q = "Call assignGrade(?, ?, ?, " + FinalProject.ActiveClass.id + ", @result)";
+
+        ResultSet res = runQuery(command, q, true);
+
+        try{
+            while(res.next()){
+                int returnVal = res.getInt("result");
+                if(returnVal > 0){
+                    System.out.println("Warning: grade exceeds assignment point value (" + returnVal + "). ");
+                }
+                else if(returnVal == -1){
+                    System.out.println("Student is not enrolled in active class.");
+                    return;
+                }
+                else if(returnVal == -2){
+                    System.out.println("Assignment not found for active class.");
+                    return;
+                }
+            }
+
+            System.out.println("Grade assigned.");
+        }
+        catch(SQLException ex){
+            System.err.println("Unable to print result set.");
+            System.err.println("SQLException: " + ex.getMessage());
+        }
     }
-    catch(SQLException ex){
-        System.err.println("Unable to print result set.");
-        System.err.println("SQLException: " + ex.getMessage());
-    }
+
+    /**
+     * For reporting grades, calculate grades out of 100. Rescale category weights so they sum to 100;
+        within each category, compute the fraction of possible points a student has achieved (divide their
+        total grade points in that category by the total possible points based on assignment point counts).
+        
+        For both student-grades and gradebook, report grades two ways: a totalgrade, based on
+        total possible points (including assignments for which the student does not have a grade at all),
+        and an attemptedgrade, that is based on the point values of the assignments for which they have
+        a grade.
+     */
+    /**
+     * student-grades <username> – show student’s current grade: all assignments, visually
+     * grouped by category, with the student’s grade (if they have one). Show subtotals for each
+     * category, along with the overall grade in the class.
+     */
+    private static void showGrade(String[] commands){
 
     }
 }
