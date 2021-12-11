@@ -21,6 +21,7 @@ CREATE TABLE Category (
 CREATE TABLE Assignment ( 
 	assignment_id INT AUTO_INCREMENT NOT NULL,
 	assignment_name VARCHAR(128) UNIQUE NOT NULL, 
+    assignment_description TEXT,
     points INT NOT NULL, 
     category_id INT NOT NULL, 
     
@@ -93,6 +94,15 @@ END$$
 
 DELIMITER ;
 
+-- Select all students for active class
+DELIMITER $$
+CREATE PROCEDURE selectAllStudents(IN cid INT)
+BEGIN
+    SELECT student_name, username FROM Student NATURAL JOIN Enrolled
+        WHERE Enrolled.course_id = cid;
+END$$
+DELIMITER ;
+
 -- select students with string (unsure if supposed to be for active class)
 DELIMITER $$
 CREATE PROCEDURE selectStudents(IN str VARCHAR(64), cid INT)
@@ -144,3 +154,53 @@ END$$
 DELIMITER ;
 
 -- Call assignGrade('hvxqer8573', 'asdf', 78, 2, @result);
+
+DELIMITER $$
+CREATE PROCEDURE createCategory(IN catName VARCHAR(64), catWeight DOUBLE, classID INT)
+BEGIN
+    INSERT INTO Category (category_name, weight, course_id)
+    VALUES (catName, catWeight, classID);
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE createAssignment(IN assignName VARCHAR(128), catName VARCHAR(64), assignDesc TEXT, assignPoints INT, classID INT)
+BEGIN
+    --get the category id from the name they specified and the current active class
+    DECLARE cid INT DEFAULT -1;
+    SELECT category_id INTO cid FROM Category WHERE category_name = catName AND course_id = classID;
+
+    INSERT INTO Assignment (assignment_name, assignment_description, points, category_id)
+    VALUES (assignName, assignDesc, assignPoints, cid);
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE createStudent(IN uname VARCHAR(64), studentID INT, lastName VARCHAR(31), firstName VARCHAR(31))
+BEGIN
+    DECLARE fullName VARCHAR(64);
+    SELECT CONCAT(lastName, ", ", firstName) INTO fullName;
+    INSERT INTO Student (username, student_name)
+    VALUES (uname, fullName);
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE updateStudent(IN studentID INT, fullName VARCHAR(64))
+BEGIN
+    UPDATE Student 
+    SET student_name = fullName
+    WHERE student_id = studentID;
+END$$
+DELIMITER ;
+
+DELIMITER $$
+CREATE PROCEDURE enrollStudent(IN uname VARCHAR(64), classID INT)
+BEGIN
+    DECLARE stuID INT DEFAULT -1;
+    SELECT student_id INTO stuID FROM Student WHERE username = uname;
+
+    INSERT INTO Enrolled (student_id, course_id)
+    VALUES (stuID, classID);
+END$$
+DELIMITER ;
