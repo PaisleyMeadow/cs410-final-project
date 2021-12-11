@@ -13,12 +13,12 @@ class FinalProject {
 
     // active class
     public static class ActiveClass{
-        // static String name = null;
-        // static int id = -1;
+        static String name = null;
+        static int id = -1;
 
         // for testing:
-        static String name = "CS410";
-        static int id = 1;
+        //static String name = "CS410";
+        //static int id = 1;
     }
 
     // database connection instance
@@ -548,17 +548,18 @@ class FinalProject {
             System.out.println("No active class set.");
             return;
         }
-        if(command.length != 5 || command.length != 2) {
+        if(command.length != 5 && command.length != 2) {
             System.out.println("Incorrect number of parameters. Format is: add-assignment <name> <Category> <Description> <points> OR add-student <username>");
             return;
         }
 
         //Common Variables
         String q;
-        String enteredName = command[3] + ", " + command[4];
 
         //If we need to create a new Student in the database
         if(command.length == 5) {
+            String enteredName = command[3] + ", " + command[4];
+
             //Check if the student already exists
             q = "SELECT username, student_name FROM Student WHERE student_id = " + command[2];
             ResultSet res = runQuery(null, q, true);
