@@ -21,12 +21,12 @@ class FinalProject {
 
     // active class
     public static class ActiveClass{
-        // static String name = null;
-        // static int id = -1;
+        static String name = null;
+        static int id = -1;
 
         // for testing:
-        static String name = "CS410";
-        static int id = 1;
+        // static String name = "CS410";
+        // static int id = 1;
     }
 
     // database connection instance
