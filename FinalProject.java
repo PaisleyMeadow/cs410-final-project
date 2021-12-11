@@ -86,6 +86,7 @@ class FinalProject {
         }
 
             // System.exit(1);
+        scanner.close();
     }
 
     private static void parseCommand(String s) {
