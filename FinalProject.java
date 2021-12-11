@@ -138,6 +138,9 @@ class FinalProject {
             case "student-grades":
                 showGrade(command);
                 break;
+            case "gradebook":
+                showAllGrades(command);
+                break;
             case "q":
                 System.exit(0);
             default:
@@ -443,14 +446,20 @@ class FinalProject {
      * grouped by category, with the student’s grade (if they have one). Show subtotals for each
      * category, along with the overall grade in the class.
      */
-    private static void showGrade(String[] commands){
+    private static void showGrade(String[] command){
 
-        if(commands.length < 2){
+        if(FinalProject.ActiveClass.id == -1){
+            System.out.println("No active class set.");
+            return;
+        }
+
+        if(command.length < 2){
             System.out.println("Format: student-grades <username>");
             return;
         }
+
         String q = "Call showStudentGrades(?, " + FinalProject.ActiveClass.id + ")";
-        ResultSet res = runQuery(commands, q, true);
+        ResultSet res = runQuery(command, q, true);
 
         try{
 
@@ -519,6 +528,42 @@ class FinalProject {
                 System.err.println("SQLException: " + ex.getMessage());
             }
         }
+    }
+
+    /**
+     * gradebook – show the current class’s gradebook: students (username, student ID, and
+     * name), along with their total grades in the class.
+     * @author Paisley Davis
+     */
+    private static void showAllGrades(String[] command){
+
+        if(FinalProject.ActiveClass.id == -1){
+            System.out.println("No active class set.");
+            return;
+        }
+
+        String q = "Call showGrades(" + FinalProject.ActiveClass.id + ")";
+        ResultSet res = runQuery(command, q, true);
+
+        try{
+
+            StringBuilder output = new StringBuilder();
+            output.append("Grades for: " + FinalProject.ActiveClass.name + "\n\n");
+            output.append("Username | ID# | Name | Grade");
+
+            while(res.next()){
+                output.append(res.getString("username") + " | ");
+                output.append(res.getInt("student_id") + " | ");
+                output.append(res.getString("student_name") + " | ");
+                output.append(res.getDouble("Grade") + "\n");
+            }
+            System.out.println(output);  
+        }
+        catch(SQLException ex){
+            System.err.println("Unable to print result set.");
+            System.err.println("SQLException: " + ex.getMessage());
+        }
+
     }
 
     /** 
